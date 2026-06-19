@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEO Command Center — Stainless Steel Fasteners</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+
+<!-- ════ FIREBASE SDK (compat — works on hosted URL AND from local file://) ════ -->
+<script defer src="https://www.gstatic.com/firebasejs/11.0.2/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/11.0.2/firebase-auth-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore-compat.js"></script>
+
+<style>
+:root {
+  --bg-0:#080a0e;--bg-1:#0d1117;--bg-2:#111825;--bg-3:#151d2a;--bg-4:#1a2130;
+  --border:#1e2736;--border-hi:#2a3348;
+  --gold:#d4a844;--gold-dim:#8a6a28;--gold-glow:rgba(212,168,68,.08);
+  --text-1:#e8edf5;--text-2:#c8d4e2;--text-3:#7a8fa8;--text-4:#5a6e84;--text-5:#3a4a62;
+  --green:#3dcc8f;--green-bg:rgba(61,204,143,.1);
+  --amber:#f0a030;--amber-bg:rgba(240,160,48,.1);
+  --red:#ef5555;--red-bg:rgba(239,85,85,.1);
+  --blue:#4a9eff;--blue-bg:rgba(74,158,255,.1);
+  --purple:#a466e8;--purple-bg:rgba(164,102,232,.1);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg-0);color:var(--text-2);font-family:'Inter',sans-serif;font-size:13px;min-height:100vh;line-height:1.5;-webkit-font-smoothing:antialiased;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--bg-1);}
+::-webkit-scrollbar-thumb{background:var(--border-hi);border-radius:3px;}
+
+/* ── HEADER ── */
+.header{background:var(--bg-1);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100;}
+.header-left{display:flex;align-items:center;gap:14px;}
+.logo-mark{width:34px;height:34px;background:linear-gradient(135deg,var(--gold) 0%,var(--gold-dim) 100%);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:14px;color:#0d1117;letter-spacing:.5px;}
+.header-title{font-family:'Rajdhani',sans-serif;font-weight:600;font-size:18px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-1);}
+.header-sub{font-size:10px;color:var(--text-4);letter-spacing:2px;text-transform:uppercase;}
+.header-right{display:flex;align-items:center;gap:16px;}
+.live-clock{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--gold);letter-spacing:1px;text-align:right;font-variant-numeric:tabular-nums;}
+.header-date{font-size:11px;color:var(--text-4);text-align:right;}
+
+/* ── SYNC STATUS ── */
+.sync-block{display:none;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;background:var(--bg-2);border:1px solid var(--border);font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--text-4);}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--text-4);}
+.sync-dot.live{background:var(--green);box-shadow:0 0 6px var(--green);}
+.sync-dot.syncing{background:var(--amber);animation:pulse 1s infinite;}
+.sync-dot.offline{background:var(--red);}
+.sync-dot.local{background:var(--text-4);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.user-email{font-size:10px;color:var(--text-3);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.signout-btn{background:none;border:1px solid var(--border);border-radius:5px;color:var(--text-4);font-size:10px;letter-spacing:.5px;text-transform:uppercase;padding:4px 10px;cursor:pointer;font-family:'Inter',sans-serif;transition:border-color .15s,color .15s;}
+.signout-btn:hover{border-color:var(--red);color:var(--red);}
+
+/* ── NAV ── */
+.nav{display:flex;gap:2px;}
+.nav-btn{display:flex;align-items:center;gap:7px;padding:7px 16px;border:none;border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif;font-size:11px;letter-spacing:.5px;color:var(--text-4);background:transparent;transition:color .15s,background .15s;}
+.nav-btn:hover{color:var(--text-3);}
+.nav-btn.active{color:var(--gold);background:var(--gold-glow);}
+.nav-sep{width:1px;height:28px;background:var(--border);margin:0 4px;}
+
+/* ── MAIN ── */
+.main{flex:1;padding:20px 28px;max-width:1440px;margin:0 auto;width:100%;}
+.view{display:none;}
+.view.active{display:block;}
+
+/* ── STATS ROW ── */
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px;}
+.stat-card{background:var(--bg-1);border:1px solid var(--border);border-radius:8px;padding:16px 18px;contain:layout style;}
+.stat-label{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-4);margin-bottom:6px;}
+.stat-val{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;font-variant-numeric:tabular-nums;}
+
+/* ── CARDS ── */
+.card{background:var(--bg-1);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;}
+.card:last-child{margin-bottom:0;}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--bg-2);}
+.card-title{font-family:'Rajdhani',sans-serif;font-weight:600;font-size:14px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-2);}
+.card-sub{font-size:11px;color:var(--text-4);}
+
+/* ── GRID LAYOUTS ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.prod-stats{display:grid;grid-template-columns:repeat(5,1fr);border-bottom:1px solid var(--border);}
+.prod-stat{padding:14px 16px;border-right:1px solid var(--border);}
+.prod-stat:last-child{border-right:none;}
+.prod-stat-label{font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-4);margin-bottom:4px;}
+.prod-stat-val{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:500;font-variant-numeric:tabular-nums;}
+
+/* ── TABLE ── */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+thead tr{background:var(--bg-2);}
+th{padding:9px 14px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-4);font-weight:500;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s;}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:var(--bg-2);}
+tbody tr:hover .edit-btn,tbody tr:hover .del-btn{opacity:1;}
+td{padding:10px 14px;font-size:12px;color:var(--text-3);vertical-align:middle;}
+td.mono{font-family:'IBM Plex Mono',monospace;color:var(--gold);font-size:11px;}
+td.num{font-family:'IBM Plex Mono',monospace;font-size:11px;font-variant-numeric:tabular-nums;}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:500;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;}
+.badge-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.b-prod{background:var(--blue-bg);color:#6abaff;}
+.b-qc{background:var(--amber-bg);color:#f0b860;}
+.b-ready{background:var(--green-bg);color:#60dda8;}
+.b-delayed{background:var(--red-bg);color:#f07070;}
+.b-completed{background:rgba(122,143,168,.12);color:#9aaec5;}
+.b-high{background:var(--red-bg);color:#f07070;}
+.b-med{background:var(--amber-bg);color:#f0b860;}
+.b-low{background:var(--green-bg);color:#60dda8;}
+
+/* ── PROGRESS ── */
+.prog-wrap{width:70px;height:4px;background:var(--bg-4);border-radius:2px;overflow:hidden;display:inline-block;vertical-align:middle;}
+.prog-fill{height:100%;border-radius:2px;transition:width .3s;}
+.prog-pct{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-4);margin-left:8px;font-variant-numeric:tabular-nums;}
+
+/* ── TASKS ── */
+.task-row{display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:1px solid #151d2a;transition:background .1s;}
+.task-row:last-child{border-bottom:none;}
+.task-row:hover{background:var(--bg-3);}
+.task-row:hover .del-btn{opacity:1;}
+.task-check{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--text-5);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:border-color .15s,background .15s,color .15s;font-size:11px;line-height:1;color:transparent;}
+.task-check.done{border-color:var(--green);background:var(--green-bg);color:var(--green);}
+.task-check.wip{border-color:var(--amber);background:var(--amber-bg);color:var(--amber);}
+.task-text{flex:1;font-size:13px;color:var(--text-2);overflow-wrap:anywhere;}
+.task-text.done{text-decoration:line-through;color:var(--text-4);}
+.del-btn{background:none;border:none;color:var(--text-5);cursor:pointer;padding:2px;font-size:15px;opacity:0;transition:opacity .15s,color .15s;line-height:1;}
+.del-btn:hover{color:var(--red);}
+.edit-btn{background:none;border:none;color:var(--text-5);cursor:pointer;padding:2px;font-size:13px;opacity:0;transition:opacity .15s,color .15s;line-height:1;}
+.edit-btn:hover{color:var(--gold);}
+
+/* ── QUICK ADD ── */
+.quick-add{display:flex;gap:8px;padding:10px 16px;border-top:1px solid var(--border);}
+.q-input{flex:1;background:var(--bg-3);border:1px solid var(--border);border-radius:6px;color:var(--text-2);font-size:12px;font-family:'Inter',sans-serif;padding:7px 10px;outline:none;transition:border-color .15s;}
+.q-input:focus{border-color:var(--gold-dim);}
+.q-input::placeholder{color:var(--text-5);}
+.q-select{background:var(--bg-3);border:1px solid var(--border);border-radius:6px;color:var(--text-3);font-size:12px;font-family:'Inter',sans-serif;padding:7px 8px;outline:none;cursor:pointer;width:70px;}
+.q-select option{background:var(--bg-3);}
+.add-btn{display:flex;align-items:center;gap:6px;background:var(--gold-glow);border:1px solid rgba(212,168,68,.3);border-radius:6px;color:var(--gold);font-size:12px;font-family:'Inter',sans-serif;padding:6px 14px;cursor:pointer;transition:background .15s,color .15s;white-space:nowrap;}
+.add-btn:hover{background:var(--gold);color:var(--bg-0);}
+.ghost-btn{background:none;border:none;color:var(--text-4);font-size:11px;cursor:pointer;padding:2px 4px;font-family:'Inter',sans-serif;}
+.ghost-btn:hover{color:var(--gold);}
+
+/* ── ALERTS ── */
+.alert-card{border-color:rgba(239,85,85,.25)!important;}
+.alert-card .card-head{border-bottom-color:rgba(239,85,85,.12);}
+.alert-title{color:var(--red)!important;}
+
+/* ── EVENTS ── */
+.event-row{display:flex;gap:10px;padding:8px 14px;border-bottom:1px solid #151d2a;align-items:flex-start;transition:background .1s;}
+.event-row:hover{background:var(--bg-2);}
+.event-row:hover .del-btn{opacity:1;}
+.event-bar{width:3px;border-radius:2px;flex-shrink:0;align-self:stretch;min-height:28px;}
+.event-name{font-size:12px;color:var(--text-2);line-height:1.3;margin-bottom:1px;overflow-wrap:anywhere;}
+.event-meta{font-size:10px;color:var(--text-4);}
+.event-type-label{font-size:10px;text-transform:uppercase;letter-spacing:.8px;}
+
+/* ── WEEKLY ── */
+.week-grid{display:grid;grid-template-columns:repeat(5,1fr);}
+.day-col{border-right:1px solid var(--border);}
+.day-col:last-child{border-right:none;}
+.day-head{padding:8px 12px;background:var(--bg-2);border-bottom:1px solid var(--border);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-4);}
+.day-head.today{color:var(--gold);font-weight:600;}
+.day-tasks{min-height:90px;padding:6px 8px;}
+.wt{display:flex;align-items:flex-start;gap:6px;padding:5px 4px;border-radius:4px;cursor:pointer;margin-bottom:3px;transition:background .1s;}
+.wt:hover{background:var(--bg-4);}
+.wt:hover .wt-del{opacity:1;}
+.wt-dot{width:6px;height:6px;border-radius:2px;flex-shrink:0;margin-top:4px;}
+.wt-text{font-size:11px;color:var(--text-3);line-height:1.4;flex:1;overflow-wrap:anywhere;}
+.wt-text.done{text-decoration:line-through;color:var(--text-4);}
+.wt-del{background:none;border:none;color:var(--text-4);cursor:pointer;font-size:12px;padding:0;opacity:0;transition:opacity .1s,color .1s;}
+.wt-del:hover{color:var(--red);}
+.day-add{width:100%;background:none;border:none;color:var(--text-5);font-size:16px;cursor:pointer;padding:3px 0;text-align:center;transition:color .15s;}
+.day-add:hover{color:var(--gold);}
+.week-key{display:flex;gap:16px;padding:8px 16px;background:var(--bg-2);border-top:1px solid var(--border);font-size:10px;color:var(--text-4);}
+.week-key span{display:flex;align-items:center;gap:5px;}
+.key-dot{width:7px;height:7px;border-radius:2px;flex-shrink:0;}
+
+/* ── CALENDAR ── */
+.cal-wrap{display:flex;min-height:380px;}
+.cal-main{flex:1;padding:16px 20px;}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.cal-month{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-2);}
+.cal-btn{background:var(--bg-3);border:1px solid var(--border);border-radius:5px;color:var(--text-3);font-size:14px;padding:3px 10px;cursor:pointer;transition:border-color .15s,color .15s;}
+.cal-btn:hover{border-color:var(--gold-dim);color:var(--gold);}
+.cal-dow{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:4px;}
+.cal-dow-cell{text-align:center;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-4);padding:4px 0;}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.cal-day{aspect-ratio:1;border-radius:5px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:4px;cursor:pointer;transition:background .1s;position:relative;font-size:12px;color:var(--text-5);}
+.cal-day:hover{background:var(--bg-3);}
+.cal-day.cur{color:var(--text-3);}
+.cal-day.today{background:var(--gold-glow);color:var(--gold);font-weight:600;}
+.cal-day.sel{background:var(--bg-4);color:var(--text-1);}
+.cal-day.has-evt::after{content:'';width:4px;height:4px;border-radius:50%;background:var(--gold);position:absolute;bottom:4px;}
+
+.evt-panel{width:240px;border-left:1px solid var(--border);display:flex;flex-direction:column;}
+.evt-panel-head{padding:12px 14px;border-bottom:1px solid var(--border);background:var(--bg-2);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-4);}
+.evt-list{flex:1;overflow-y:auto;padding:4px 0;max-height:340px;}
+.evt-form{padding:10px 14px;border-top:1px solid var(--border);background:var(--bg-2);display:flex;flex-direction:column;gap:6px;}
+.evt-input{background:var(--bg-3);border:1px solid var(--border);border-radius:5px;color:var(--text-2);font-size:11px;font-family:'Inter',sans-serif;padding:6px 8px;outline:none;width:100%;transition:border-color .15s;}
+.evt-input:focus{border-color:var(--gold-dim);}
+.evt-input::placeholder{color:var(--text-5);}
+.evt-select{background:var(--bg-3);border:1px solid var(--border);border-radius:5px;color:var(--text-3);font-size:11px;font-family:'Inter',sans-serif;padding:5px 6px;outline:none;width:100%;cursor:pointer;}
+.evt-select option{background:var(--bg-3);}
+.evt-add-btn{background:var(--gold-glow);border:1px solid rgba(212,168,68,.3);border-radius:5px;color:var(--gold);font-size:11px;font-family:'Inter',sans-serif;padding:6px;cursor:pointer;transition:background .15s,color .15s;text-align:center;}
+.evt-add-btn:hover{background:var(--gold);color:var(--bg-0);}
+
+.type-key{display:flex;gap:8px;font-size:10px;color:var(--text-4);}
+.type-key span{display:flex;align-items:center;gap:4px;}
+
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--bg-3);border:1px solid var(--border-hi);border-radius:10px;width:100%;max-width:480px;max-height:90vh;overflow:auto;}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);}
+.modal-title{font-family:'Rajdhani',sans-serif;font-weight:600;font-size:16px;letter-spacing:1px;text-transform:uppercase;color:var(--text-2);}
+.modal-close{background:none;border:none;color:var(--text-4);cursor:pointer;font-size:18px;padding:4px;line-height:1;}
+.modal-body{padding:20px;}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;}
+.field{display:flex;flex-direction:column;gap:4px;}
+.field.full{grid-column:1/-1;}
+.field-label{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-4);}
+.field-input{background:var(--bg-4);border:1px solid var(--border);border-radius:6px;color:var(--text-2);font-size:12px;font-family:'Inter',sans-serif;padding:8px 10px;outline:none;transition:border-color .15s;}
+.field-input:focus{border-color:var(--gold-dim);}
+.field-input:read-only{opacity:.5;cursor:not-allowed;}
+.field-input::placeholder{color:var(--text-5);}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;}
+.btn-cancel{background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-3);font-size:12px;font-family:'Inter',sans-serif;padding:8px 16px;cursor:pointer;transition:border-color .15s,color .15s;}
+.btn-cancel:hover{border-color:var(--border-hi);color:var(--text-1);}
+.btn-confirm{background:var(--gold);border:1px solid var(--gold);border-radius:6px;color:var(--bg-0);font-size:12px;font-family:'Inter',sans-serif;font-weight:500;padding:8px 16px;cursor:pointer;transition:background .15s;}
+.btn-confirm:hover{background:#e0c060;}
+
+/* ── LOGIN SCREEN ── */
+.login-overlay{position:fixed;inset:0;background:var(--bg-0);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;}
+.login-card{width:100%;max-width:380px;background:var(--bg-1);border:1px solid var(--border);border-radius:12px;padding:32px 28px;}
+.login-brand{display:flex;align-items:center;gap:12px;margin-bottom:28px;justify-content:center;}
+.login-brand .logo-mark{width:40px;height:40px;font-size:16px;}
+.login-brand-text{font-family:'Rajdhani',sans-serif;font-weight:600;font-size:16px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-1);}
+.login-title{font-family:'Rajdhani',sans-serif;font-weight:600;font-size:18px;letter-spacing:1px;text-transform:uppercase;color:var(--text-2);margin-bottom:6px;text-align:center;}
+.login-sub{font-size:11px;color:var(--text-4);text-align:center;margin-bottom:22px;letter-spacing:.5px;}
+.login-form{display:flex;flex-direction:column;gap:12px;}
+.login-error{font-size:11px;color:var(--red);min-height:14px;text-align:center;}
+.login-info{font-size:11px;color:var(--green);min-height:14px;text-align:center;}
+.login-actions{display:flex;flex-direction:column;gap:8px;margin-top:6px;}
+.login-primary{background:var(--gold);border:none;border-radius:6px;color:var(--bg-0);font-family:'Inter',sans-serif;font-weight:500;font-size:13px;padding:10px;cursor:pointer;transition:background .15s;}
+.login-primary:hover{background:#e0c060;}
+.login-primary:disabled{opacity:.5;cursor:not-allowed;}
+.login-secondary{background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-3);font-family:'Inter',sans-serif;font-size:12px;padding:8px;cursor:pointer;transition:border-color .15s,color .15s;}
+.login-secondary:hover{border-color:var(--gold-dim);color:var(--gold);}
+.login-mode-toggle{font-size:11px;color:var(--text-4);text-align:center;margin-top:14px;}
+.login-mode-toggle a{color:var(--gold);cursor:pointer;text-decoration:none;}
+.login-mode-toggle a:hover{text-decoration:underline;}
+.login-config-warn{background:var(--amber-bg);border:1px solid rgba(240,160,48,.3);border-radius:6px;padding:10px 12px;font-size:11px;color:var(--amber);line-height:1.5;margin-bottom:18px;}
+
+/* ── EMPTY ── */
+.empty{padding:24px;text-align:center;color:var(--text-5);font-size:12px;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1100px){
+  .stats-row{grid-template-columns:repeat(3,1fr);}
+  .two-col{grid-template-columns:1fr;}
+  .prod-stats{grid-template-columns:repeat(3,1fr);}
+}
+@media(max-width:768px){
+  .header{padding:0 16px;}
+  .main{padding:12px 14px;}
+  .stats-row{grid-template-columns:repeat(2,1fr);}
+  .week-grid{grid-template-columns:1fr 1fr;}
+  .cal-wrap{flex-direction:column;}
+  .evt-panel{width:100%;border-left:none;border-top:1px solid var(--border);}
+  .nav-btn span{display:none;}
+  .prod-stats{grid-template-columns:repeat(2,1fr);}
+  .user-email,.header-date{display:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- ════ LOGIN SCREEN ════ -->
+<div class="login-overlay" id="loginOverlay" style="display:none">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="logo-mark">SS</div>
+      <div class="login-brand-text">Command Center</div>
+    </div>
+    <div class="login-title" id="loginTitle">Sign In</div>
+    <div class="login-sub" id="loginSub">Access your dashboard from any device</div>
+    <div class="login-config-warn" id="loginConfigWarn" style="display:none">
+      Firebase isn't configured yet. The dashboard will work in <b>local-only</b> mode (data stays on this device). To enable multi-device sync, paste your Firebase config into the <code>firebaseConfig</code> object in this HTML file.
+    </div>
+    <div class="login-form">
+      <div class="field"><span class="field-label">Email</span>
+        <input class="field-input" id="loginEmail" type="email" autocomplete="email" placeholder="you@example.com">
+      </div>
+      <div class="field"><span class="field-label">Password</span>
+        <input class="field-input" id="loginPass" type="password" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doAuth()">
+      </div>
+      <div class="login-error" id="loginError"></div>
+      <div class="login-info" id="loginInfo"></div>
+      <div class="login-actions">
+        <button class="login-primary" id="loginPrimary" onclick="doAuth()">Sign In</button>
+        <button class="login-secondary" id="loginLocal" onclick="useLocalOnly()">Use offline (this device only)</button>
+      </div>
+      <div class="login-mode-toggle">
+        <span id="loginToggleText">First time? </span><a id="loginToggle" onclick="toggleAuthMode()">Create an account</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ HEADER ════ -->
+<header class="header">
+  <div class="header-left">
+    <div class="logo-mark">SS</div>
+    <div>
+      <div class="header-title">Command Center</div>
+      <div class="header-sub">Stainless Steel Fasteners</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <nav class="nav">
+      <button class="nav-btn active" data-view="overview" onclick="switchView('overview',this)">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="1" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="1" width="6" height="3.5" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="6.5" width="6" height="8.5" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="1" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/></svg>
+        <span>Today</span>
+      </button>
+      <button class="nav-btn" data-view="production" onclick="switchView('production',this)">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="5" width="12" height="2.2" rx="1" fill="currentColor" opacity=".9"/><rect x="2" y="9" width="12" height="2.2" rx="1" fill="currentColor" opacity=".5"/><rect x="3.5" y="1.5" width="9" height="2.2" rx="1" fill="currentColor" opacity=".3"/><rect x="2" y="12.5" width="12" height="2.2" rx="1" fill="currentColor" opacity=".2"/></svg>
+        <span>Production</span>
+      </button>
+      <button class="nav-btn" data-view="tasks" onclick="switchView('tasks',this)">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="3" width="12" height="10" rx="2" stroke="currentColor" stroke-width="1.3" fill="none"/><path d="M5 8l2 2 3.5-3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Tasks</span>
+      </button>
+      <button class="nav-btn" data-view="calendar" onclick="switchView('calendar',this)">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="3" width="12" height="10" rx="2" stroke="currentColor" stroke-width="1.3" fill="none"/><line x1="2" y1="6.5" x2="14" y2="6.5" stroke="currentColor" stroke-width="1"/><line x1="5.5" y1="1.5" x2="5.5" y2="4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="10.5" y1="1.5" x2="10.5" y2="4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        <span>Calendar</span>
+      </button>
+    </nav>
+    <div class="nav-sep"></div>
+    <div class="sync-block" id="syncBlock">
+      <span class="sync-dot" id="syncDot"></span>
+      <span id="syncText">Local</span>
+    </div>
+    <span class="user-email" id="userEmail"></span>
+    <button class="signout-btn" id="signoutBtn" onclick="doLogout()" style="display:none">Sign Out</button>
+    <div class="nav-sep"></div>
+    <div>
+      <div class="live-clock" id="clock">--:--:--</div>
+      <div class="header-date" id="dateDisplay"></div>
+    </div>
+  </div>
+</header>
+
+<main class="main">
+
+<!-- ════════ VIEW: OVERVIEW ════════ -->
+<div class="view active" id="view-overview">
+  <div class="stats-row" id="overviewStats"></div>
+  <div class="two-col">
+    <div>
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">Today's Tasks</span>
+          <span class="card-sub" id="oDailyCount"></span>
+        </div>
+        <div id="oDailyList"></div>
+        <div class="quick-add">
+          <input class="q-input" id="oDailyInput" placeholder="Add a task..." onkeydown="if(event.key==='Enter')addDailyTask('oDailyInput','oDailyPri')">
+          <select class="q-select" id="oDailyPri"><option value="high">High</option><option value="med" selected>Med</option><option value="low">Low</option></select>
+          <button class="add-btn" onclick="addDailyTask('oDailyInput','oDailyPri')">Add</button>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div id="alertsCard"></div>
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">Upcoming Events</span>
+          <button class="ghost-btn" onclick="switchView('calendar')">View All</button>
+        </div>
+        <div id="oEventList"></div>
+      </div>
+      <div class="card" id="oWeeklyToday" style="margin-top:16px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ VIEW: PRODUCTION ════════ -->
+<div class="view" id="view-production">
+  <div class="card">
+    <div class="card-head">
+      <span class="card-title">Production Orders</span>
+      <button class="add-btn" onclick="openProductionModal()">+ New Order</button>
+    </div>
+    <div class="prod-stats" id="prodStats"></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Order ID</th><th>Product / Grade</th><th>Client</th><th>Vendor</th><th>Qty</th><th>Vendor ₹</th><th>Sales ₹</th><th>Margin</th><th>Total Value</th><th>Start</th><th>Delivery</th><th>Progress</th><th>Status</th><th></th></tr></thead>
+        <tbody id="prodBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ VIEW: TASKS ════════ -->
+<div class="view" id="view-tasks">
+  <div class="card">
+    <div class="card-head">
+      <span class="card-title">Daily Tasks</span>
+      <span class="card-sub" id="tDailyCount"></span>
+    </div>
+    <div id="tDailyList"></div>
+    <div class="quick-add">
+      <input class="q-input" id="tDailyInput" placeholder="Add a task..." onkeydown="if(event.key==='Enter')addDailyTask('tDailyInput','tDailyPri')">
+      <select class="q-select" id="tDailyPri"><option value="high">High</option><option value="med" selected>Med</option><option value="low">Low</option></select>
+      <button class="add-btn" onclick="addDailyTask('tDailyInput','tDailyPri')">Add</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head">
+      <span class="card-title">Weekly Planner</span>
+    </div>
+    <div class="week-grid" id="weekGrid"></div>
+    <div class="week-key">
+      <span style="letter-spacing:1px;text-transform:uppercase;margin-right:4px;">Key:</span>
+      <span><span class="key-dot" style="background:var(--green)"></span>Done</span>
+      <span><span class="key-dot" style="background:var(--amber)"></span>In Progress</span>
+      <span><span class="key-dot" style="background:var(--text-5)"></span>Not Started</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ VIEW: CALENDAR ════════ -->
+<div class="view" id="view-calendar">
+  <div class="card">
+    <div class="card-head">
+      <span class="card-title">Business Calendar</span>
+      <div class="type-key">
+        <span><span class="key-dot" style="background:var(--blue)"></span>Trip</span>
+        <span><span class="key-dot" style="background:var(--purple)"></span>Exhibition</span>
+        <span><span class="key-dot" style="background:var(--green)"></span>Meeting</span>
+        <span><span class="key-dot" style="background:var(--amber)"></span>Deadline</span>
+      </div>
+    </div>
+    <div class="cal-wrap">
+      <div class="cal-main">
+        <div class="cal-nav">
+          <button class="cal-btn" onclick="changeMonth(-1)" aria-label="Previous month">&#8592;</button>
+          <span class="cal-month" id="calMonthLabel"></span>
+          <button class="cal-btn" onclick="changeMonth(1)" aria-label="Next month">&#8594;</button>
+        </div>
+        <div class="cal-dow">
+          <div class="cal-dow-cell">Sun</div><div class="cal-dow-cell">Mon</div><div class="cal-dow-cell">Tue</div>
+          <div class="cal-dow-cell">Wed</div><div class="cal-dow-cell">Thu</div><div class="cal-dow-cell">Fri</div><div class="cal-dow-cell">Sat</div>
+        </div>
+        <div class="cal-days" id="calDays"></div>
+      </div>
+      <div class="evt-panel">
+        <div class="evt-panel-head" id="evtPanelHead">Upcoming Events</div>
+        <div class="evt-list" id="evtList"></div>
+        <div class="evt-form">
+          <input class="evt-input" id="evtName" placeholder="Event name..." onkeydown="if(event.key==='Enter')addEvent()">
+          <input class="evt-input" id="evtDate" type="date">
+          <select class="evt-select" id="evtType">
+            <option value="trip">Business Trip</option>
+            <option value="exhibition">Exhibition</option>
+            <option value="meeting">Meeting</option>
+            <option value="deadline">Deadline</option>
+          </select>
+          <button class="evt-add-btn" onclick="addEvent()">+ Add Event</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<!-- ════ PRODUCTION MODAL ════ -->
+<div class="modal-overlay" id="productionModal" role="dialog" aria-modal="true" aria-labelledby="prodModalTitle">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title" id="prodModalTitle">New Production Order</span>
+      <button class="modal-close" onclick="closeProductionModal()" aria-label="Close">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-grid">
+        <div class="field"><span class="field-label">Order ID</span><input class="field-input" id="m_id" placeholder="ORD-001"></div>
+        <div class="field"><span class="field-label">Client</span><input class="field-input" id="m_client" placeholder="Client name"></div>
+        <div class="field full"><span class="field-label">Product / Grade</span><input class="field-input" id="m_product" placeholder="e.g. M8 Hex Bolt – SS 316L"></div>
+        <div class="field"><span class="field-label">Quantity (pcs)</span><input class="field-input" id="m_qty" type="number" min="0" placeholder="5000"></div>
+        <div class="field"><span class="field-label">Status</span>
+          <select class="field-input" id="m_status" style="cursor:pointer">
+            <option value="in-prod">In Production</option><option value="qc">Quality Check</option>
+            <option value="ready">Ready to Ship</option><option value="delayed">Delayed</option>
+            <option value="completed">Order Completed</option>
+          </select>
+        </div>
+        <div class="field full"><span class="field-label">Vendor Name</span><input class="field-input" id="m_vendor" placeholder="e.g. Viraj Profiles"></div>
+        <div class="field"><span class="field-label">Vendor Price (₹/pc)</span><input class="field-input" id="m_vendorPrice" type="number" min="0" step="0.01" placeholder="4.20"></div>
+        <div class="field"><span class="field-label">Sales Price (₹/pc)</span><input class="field-input" id="m_salesPrice" type="number" min="0" step="0.01" placeholder="6.50"></div>
+        <div class="field"><span class="field-label">Start Date</span><input class="field-input" id="m_start" type="date"></div>
+        <div class="field"><span class="field-label">Delivery Date</span><input class="field-input" id="m_delivery" type="date"></div>
+        <div class="field"><span class="field-label">Progress %</span><input class="field-input" id="m_progress" type="number" min="0" max="100" placeholder="0-100"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeProductionModal()">Cancel</button>
+        <button class="btn-confirm" id="prodModalBtn" onclick="saveProductionOrder()">Add Order</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ WEEK TASK MODAL ════ -->
+<div class="modal-overlay" id="weekModal" role="dialog" aria-modal="true">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-head">
+      <span class="modal-title">Add Weekly Task</span>
+      <button class="modal-close" onclick="closeWeekModal()" aria-label="Close">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:18px">
+        <div class="field"><span class="field-label">Task</span><input class="field-input" id="wm_task" placeholder="Task description..." onkeydown="if(event.key==='Enter')saveWeekTask()"></div>
+        <div class="field"><span class="field-label">Day</span><select class="field-input" id="wm_day" style="cursor:pointer"></select></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeWeekModal()">Cancel</button>
+        <button class="btn-confirm" onclick="saveWeekTask()">Add Task</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ════════════════════════════════════════════════════════════════════
+// ⚙️  FIREBASE CONFIG — PASTE YOUR PROJECT CONFIG HERE
+// ════════════════════════════════════════════════════════════════════
+// 1. Go to https://console.firebase.google.com/  →  Add project
+// 2. In the project: Build  →  Authentication  →  Sign-in method  →  enable Email/Password
+// 3. Build  →  Firestore Database  →  Create database (Production mode)
+// 4. Paste these Firestore security rules (Rules tab):
+//      rules_version = '2';
+//      service cloud.firestore {
+//        match /databases/{database}/documents {
+//          match /users/{userId} {
+//            allow read, write: if request.auth != null && request.auth.uid == userId;
+//          }
+//        }
+//      }
+// 5. Project settings (⚙)  →  Your apps  →  </> Web  →  copy the firebaseConfig object below
+// 6. Authentication → Settings → Authorized domains → add your GitHub Pages domain
+//    (e.g. yourname.github.io). localhost is already there.
+// ════════════════════════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey:            "AIzaSyA_dhYAQTCzdiGWTgXhCUg_YEdHIAUUXTo",
+  authDomain:        "ceo-commander-center.firebaseapp.com",
+  projectId:         "ceo-commander-center",
+  storageBucket:     "ceo-commander-center.firebasestorage.app",
+  messagingSenderId: "965078896750",
+  appId:             "1:965078896750:web:976f1b8a9243fad7a0967f"
+};
+
+const FIREBASE_READY = !firebaseConfig.apiKey.startsWith('PASTE_');
+
+// ════════════════════════════════════════════════════════════════════
+// CONSTANTS
+// ════════════════════════════════════════════════════════════════════
+const LOCAL_KEY = 'ssf_ceo_v3';
+const STATUS_MAP = {
+  'in-prod':  {label:'In Production',    cls:'b-prod',      color:'var(--blue)'},
+  qc:         {label:'Quality Check',    cls:'b-qc',        color:'var(--amber)'},
+  ready:      {label:'Ready to Ship',    cls:'b-ready',     color:'var(--green)'},
+  delayed:    {label:'Delayed',          cls:'b-delayed',   color:'var(--red)'},
+  completed:  {label:'Order Completed',  cls:'b-completed', color:'#9aaec5'},
+};
+const PRI_CLS    = {high:'b-high', med:'b-med', low:'b-low'};
+const TASK_CYCLE = {todo:'wip', wip:'done', done:'todo'};
+const DAYS       = ['mon','tue','wed','thu','fri'];
+const DAY_LABELS = {mon:'Mon', tue:'Tue', wed:'Wed', thu:'Thu', fri:'Fri'};
+const DAY_FULL   = {mon:'Monday', tue:'Tuesday', wed:'Wednesday', thu:'Thursday', fri:'Friday'};
+const EVT_TYPES  = {
+  trip:       {label:'Trip',       color:'var(--blue)'},
+  exhibition: {label:'Exhibition', color:'var(--purple)'},
+  meeting:    {label:'Meeting',    color:'var(--green)'},
+  deadline:   {label:'Deadline',   color:'var(--amber)'},
+};
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function defaultData() {
+  const now = new Date();
+  return {
+    production: [
+      {id:'ORD-2025-001',product:'M8 Hex Bolt – SS 316L',           client:'Gujarat Pipes Ltd',      qty:15000, start:'2025-04-01', delivery:'2025-04-20', progress:75,  status:'in-prod', vendor:'Viraj Profiles',     vendorPrice:4.20,  salesPrice:6.50},
+      {id:'ORD-2025-002',product:'M10 Socket Cap Screw – SS 304',   client:'Reliance Infrastructure',qty:8000,  start:'2025-04-05', delivery:'2025-04-25', progress:92,  status:'qc',      vendor:'APL Apollo',         vendorPrice:8.75,  salesPrice:12.00},
+      {id:'ORD-2025-003',product:'M6 Flat Washer – SS 316',         client:'TATA Projects',          qty:50000, start:'2025-04-08', delivery:'2025-04-30', progress:100, status:'ready',   vendor:'Sunshine Fasteners', vendorPrice:0.90,  salesPrice:1.45},
+      {id:'ORD-2025-004',product:'M12 U-Bolt – SS 304L',            client:'Shapoorji Pallonji',     qty:3200,  start:'2025-03-28', delivery:'2025-04-18', progress:40,  status:'delayed', vendor:'Viraj Profiles',     vendorPrice:22.50, salesPrice:32.00},
+    ],
+    dailyTasks: [
+      {id:1, text:'Review production line 3 output',           status:'done', pri:'high'},
+      {id:2, text:'Call Gujarat Pipes on delivery schedule',   status:'wip',  pri:'high'},
+      {id:3, text:'Approve Q2 raw material purchase order',    status:'todo', pri:'med'},
+      {id:4, text:'Review new client inquiry – Chennai Pipes', status:'todo', pri:'low'},
+    ],
+    weeklyTasks: {
+      mon: [{id:1, text:'Weekly production targets review',  status:'done'}],
+      tue: [{id:1, text:'Dispatch planning for April orders', status:'wip'}],
+      wed: [{id:1, text:'QC audit – Line 2',                  status:'todo'}],
+      thu: [{id:1, text:'Supplier payment approvals',         status:'todo'}],
+      fri: [{id:1, text:'EOW summary report',                 status:'todo'}],
+    },
+    events: [
+      {id:1, name:'Fastener India Exhibition',                date:'2025-05-12', type:'exhibition'},
+      {id:2, name:'Client visit – Mumbai (Reliance)',         date:'2025-04-22', type:'meeting'},
+      {id:3, name:'Delhi business trip – distributor meetings',date:'2025-04-28', type:'trip'},
+      {id:4, name:'Q2 order cut-off deadline',                date:'2025-04-30', type:'deadline'},
+    ],
+    calYear:  now.getFullYear(),
+    calMonth: now.getMonth(),
+  };
+}
+
+// ════════════════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════════════════
+let data           = defaultData();
+let activeView     = 'overview';
+let selectedDate   = null;
+let editingProdIdx = -1;
+
+let fbAuth = null, fbDb = null, fbUser = null;
+let firestoreUnsub  = null;
+let firestoreReady  = false;
+let localOnlyMode   = false;
+let authMode        = 'login';   // 'login' | 'signup'
+let suppressNextEcho = false;
+
+// ════════════════════════════════════════════════════════════════════
+// DOM HELPERS
+// ════════════════════════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+const ESC_MAP = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ESC_MAP[c]);
+const todayISO = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+};
+const getTodayKey = () => {
+  const d = ['sun','mon','tue','wed','thu','fri','sat'][new Date().getDay()];
+  return DAYS.includes(d) ? d : null;
+};
+const fmtDate = d => {
+  if (!d) return '';
+  const dt = new Date(d + 'T00:00:00');
+  return isNaN(dt.getTime()) ? '' : dt.toLocaleDateString('en-IN', {day:'numeric', month:'short'});
+};
+
+function computeStats() {
+  const s = {total:0, inProd:0, qc:0, ready:0, delayed:0};
+  for (const o of data.production) {
+    s.total++;
+    if      (o.status === 'in-prod') s.inProd++;
+    else if (o.status === 'qc')      s.qc++;
+    else if (o.status === 'ready')   s.ready++;
+    else if (o.status === 'delayed') s.delayed++;
+  }
+  return s;
+}
+
+function normalizeData(d) {
+  const merged = Object.assign(defaultData(), d || {});
+  merged.weeklyTasks = merged.weeklyTasks || {};
+  for (const k of DAYS) if (!Array.isArray(merged.weeklyTasks[k])) merged.weeklyTasks[k] = [];
+  merged.production = Array.isArray(merged.production) ? merged.production : [];
+  merged.dailyTasks = Array.isArray(merged.dailyTasks) ? merged.dailyTasks : [];
+  merged.events     = Array.isArray(merged.events)     ? merged.events     : [];
+  return merged;
+}
+
+const taskCheckClass = s => 'task-check' + (s==='done'?' done':s==='wip'?' wip':'');
+const taskCheckIcon  = s => s==='done' ? '✓' : s==='wip' ? '→' : '';
+const badgeHTML      = (cls, label) => `<span class="badge ${cls}">${esc(label)}</span>`;
+function statusBadge(status) {
+  const s = STATUS_MAP[status] || STATUS_MAP['in-prod'];
+  return `<span class="badge ${s.cls}"><span class="badge-dot" style="background:${s.color}"></span>${s.label}</span>`;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// PERSISTENCE — local cache + Firestore sync
+// ════════════════════════════════════════════════════════════════════
+function localLoad() {
+  try { const raw = localStorage.getItem(LOCAL_KEY); return raw ? JSON.parse(raw) : null; }
+  catch (e) { return null; }
+}
+function localSave(d) {
+  try { localStorage.setItem(LOCAL_KEY, JSON.stringify(d)); } catch (e) {}
+}
+
+let saveTimer = 0;
+function save() {
+  // Always write to local cache immediately (works offline + fast)
+  localSave(data);
+  // If signed in, debounce a Firestore write
+  if (firestoreReady && fbUser) {
+    setSyncStatus('syncing');
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(async () => {
+      try {
+        suppressNextEcho = true;
+        await fbDb.collection('users').doc(fbUser.uid).set(data, {merge:false});
+        if (navigator.onLine) setSyncStatus('live');
+      } catch (e) {
+        console.error('Firestore write failed:', e);
+        setSyncStatus('offline');
+      }
+    }, 350);
+  }
+}
+
+function setSyncStatus(state) {
+  const block = $('syncBlock');
+  const dot   = $('syncDot');
+  const text  = $('syncText');
+  if (!block || !dot || !text) return;
+  block.style.display = 'inline-flex';
+  dot.className = 'sync-dot ' + state;
+  text.textContent = {live:'Live', syncing:'Syncing…', offline:'Offline', local:'Local'}[state] || state;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// AUTH UI
+// ════════════════════════════════════════════════════════════════════
+function showLoginScreen() {
+  $('loginOverlay').style.display = 'flex';
+  document.querySelector('.header').style.visibility = 'hidden';
+  document.querySelector('.main').style.visibility   = 'hidden';
+  if (!FIREBASE_READY) $('loginConfigWarn').style.display = 'block';
+  setTimeout(() => $('loginEmail').focus(), 50);
+}
+function hideLoginScreen() {
+  $('loginOverlay').style.display = 'none';
+  document.querySelector('.header').style.visibility = '';
+  document.querySelector('.main').style.visibility   = '';
+}
+function setLoginBusy(busy) {
+  $('loginPrimary').disabled = busy;
+  $('loginLocal').disabled   = busy;
+}
+function setLoginError(msg) { $('loginError').textContent = msg || ''; $('loginInfo').textContent = ''; }
+function setLoginInfo(msg)  { $('loginInfo').textContent  = msg || ''; $('loginError').textContent = ''; }
+
+function toggleAuthMode() {
+  authMode = authMode === 'login' ? 'signup' : 'login';
+  if (authMode === 'signup') {
+    $('loginTitle').textContent = 'Create Account';
+    $('loginSub').textContent   = 'First-time setup — pick an email and password';
+    $('loginPrimary').textContent = 'Create Account';
+    $('loginToggleText').textContent = 'Already have an account? ';
+    $('loginToggle').textContent = 'Sign in';
+    $('loginPass').setAttribute('autocomplete', 'new-password');
+  } else {
+    $('loginTitle').textContent = 'Sign In';
+    $('loginSub').textContent   = 'Access your dashboard from any device';
+    $('loginPrimary').textContent = 'Sign In';
+    $('loginToggleText').textContent = 'First time? ';
+    $('loginToggle').textContent = 'Create an account';
+    $('loginPass').setAttribute('autocomplete', 'current-password');
+  }
+  setLoginError(''); setLoginInfo('');
+}
+
+async function doAuth() {
+  if (!FIREBASE_READY) { setLoginError('Firebase isn\'t configured. Use offline mode or paste your config into the file.'); return; }
+  const email = $('loginEmail').value.trim();
+  const pass  = $('loginPass').value;
+  if (!email || !pass) { setLoginError('Enter email and password.'); return; }
+  if (authMode === 'signup' && pass.length < 6) { setLoginError('Password must be at least 6 characters.'); return; }
+  setLoginBusy(true);
+  setLoginInfo(authMode === 'signup' ? 'Creating account…' : 'Signing in…');
+  try {
+    if (authMode === 'signup') await fbAuth.createUserWithEmailAndPassword(email, pass);
+    else                       await fbAuth.signInWithEmailAndPassword(email, pass);
+    // onAuthStateChanged handles the rest
+  } catch (e) {
+    setLoginError(e.message.replace(/^Firebase:\s*/, '').replace(/\s*\(auth\/[^)]+\)\.?$/, ''));
+    setLoginBusy(false);
+  }
+}
+
+function useLocalOnly() {
+  localOnlyMode = true;
+  hideLoginScreen();
+  const cached = localLoad();
+  data = normalizeData(cached || data);
+  setSyncStatus('local');
+  render();
+  startClock();
+}
+
+async function doLogout() {
+  if (firestoreUnsub) { firestoreUnsub(); firestoreUnsub = null; }
+  firestoreReady = false;
+  fbUser = null;
+  $('userEmail').textContent = '';
+  $('signoutBtn').style.display = 'none';
+  if (fbAuth) await fbAuth.signOut();
+  showLoginScreen();
+}
+
+// Expose for inline onclicks
+Object.assign(window, {doAuth, toggleAuthMode, useLocalOnly, doLogout});
+
+// ════════════════════════════════════════════════════════════════════
+// FIREBASE INIT (runs after the compat SDK scripts load via defer)
+// ════════════════════════════════════════════════════════════════════
+function initFirebase() {
+  if (!FIREBASE_READY) {
+    showLoginScreen();
+    return;
+  }
+  if (typeof firebase === 'undefined') {
+    // SDK not loaded (offline first-load with no cached SDK). Fall back to local.
+    console.warn('Firebase SDK not loaded — local-only mode');
+    showLoginScreen();
+    return;
+  }
+  try {
+    firebase.initializeApp(firebaseConfig);
+    fbAuth = firebase.auth();
+    fbDb   = firebase.firestore();
+    // Enable offline persistence (cached writes/reads when offline)
+    fbDb.enablePersistence({synchronizeTabs:true}).catch(err => {
+      // failed-precondition (multi-tab), unimplemented (Safari private). Non-fatal.
+      console.warn('Firestore persistence not enabled:', err.code || err);
+    });
+    fbAuth.onAuthStateChanged(handleAuthChange);
+  } catch (e) {
+    console.error('Firebase init failed:', e);
+    showLoginScreen();
+  }
+}
+
+async function handleAuthChange(user) {
+  if (user) {
+    fbUser = user;
+    hideLoginScreen();
+    $('userEmail').textContent = user.email || '';
+    $('signoutBtn').style.display = 'inline-block';
+    setSyncStatus('syncing');
+
+    // Pre-paint with local cache so UI shows something immediately
+    const cached = localLoad();
+    if (cached) { data = normalizeData(cached); render(); }
+    startClock();
+
+    // Subscribe to Firestore document
+    const ref = fbDb.collection('users').doc(user.uid);
+    firestoreUnsub = ref.onSnapshot(async snap => {
+      if (!snap.exists) {
+        // First-time user — upload current local data (or defaults) as initial doc
+        try {
+          await ref.set(data, {merge:false});
+          setSyncStatus('live');
+        } catch (e) { setSyncStatus('offline'); }
+        return;
+      }
+      // Skip echo from our own write to avoid clobbering an in-flight edit
+      if (suppressNextEcho && snap.metadata.hasPendingWrites === false) {
+        suppressNextEcho = false;
+      }
+      const cloud = snap.data();
+      data = normalizeData(cloud);
+      localSave(data);
+      firestoreReady = true;
+      setSyncStatus(snap.metadata.hasPendingWrites ? 'syncing' : (navigator.onLine ? 'live' : 'offline'));
+      render();
+    }, err => {
+      console.error('Firestore listen error:', err);
+      setSyncStatus('offline');
+    });
+  } else {
+    fbUser = null;
+    if (firestoreUnsub) { firestoreUnsub(); firestoreUnsub = null; }
+    firestoreReady = false;
+    showLoginScreen();
+    setLoginBusy(false);
+  }
+}
+
+window.addEventListener('online',  () => { if (fbUser) setSyncStatus('live');    });
+window.addEventListener('offline', () => { if (fbUser) setSyncStatus('offline'); });
+
+// ════════════════════════════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════════════════════════════
+function switchView(id, btn) {
+  if (!['overview','production','tasks','calendar'].includes(id)) return;
+  activeView = id;
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-'+id));
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    b.classList.toggle('active', btn ? b === btn : b.dataset.view === id);
+  });
+  render();
+}
+window.switchView = switchView;
+
+// ════════════════════════════════════════════════════════════════════
+// CLOCK — paused when tab hidden
+// ════════════════════════════════════════════════════════════════════
+let clockTimer = null;
+function updateClock() {
+  const now = new Date();
+  $('clock').textContent = now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  $('dateDisplay').textContent = now.toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'short', year:'numeric'});
+}
+function startClock() {
+  if (clockTimer) return;
+  updateClock();
+  clockTimer = setInterval(updateClock, 1000);
+}
+function stopClock() { if (clockTimer) { clearInterval(clockTimer); clockTimer = null; } }
+document.addEventListener('visibilitychange', () => { if (document.hidden) stopClock(); else startClock(); });
+
+// ════════════════════════════════════════════════════════════════════
+// RENDERERS
+// ════════════════════════════════════════════════════════════════════
+function renderDailyList(containerId, countId) {
+  const el     = $(containerId);
+  const tasks  = data.dailyTasks;
+  const done   = tasks.reduce((n,t) => n + (t.status === 'done' ? 1 : 0), 0);
+  $(countId).textContent = `${done}/${tasks.length} complete`;
+  if (!tasks.length) { el.innerHTML = '<div class="empty">No tasks yet. Add one below.</div>'; return; }
+  el.innerHTML = tasks.map((t,i) => `
+    <div class="task-row">
+      <button class="${taskCheckClass(t.status)}" onclick="cycleDailyTask(${i})" aria-label="Cycle status">${taskCheckIcon(t.status)}</button>
+      <span class="task-text${t.status==='done'?' done':''}">${esc(t.text)}</span>
+      ${badgeHTML(PRI_CLS[t.pri] || 'b-med', t.pri)}
+      <button class="del-btn" onclick="deleteDailyTask(${i})" aria-label="Delete task">×</button>
+    </div>`).join('');
+}
+
+function renderOverview() {
+  const stats   = computeStats();
+  const done    = data.dailyTasks.reduce((n,t) => n + (t.status === 'done' ? 1 : 0), 0);
+  const allDone = done === data.dailyTasks.length && data.dailyTasks.length > 0;
+
+  $('overviewStats').innerHTML = [
+    {l:'Active Orders', v:stats.total,  c:'var(--gold)'},
+    {l:'In Production', v:stats.inProd, c:'var(--blue)'},
+    {l:'Ready to Ship', v:stats.ready,  c:'var(--green)'},
+    {l:'Delayed',       v:stats.delayed,c:stats.delayed>0?'var(--red)':'var(--text-4)'},
+    {l:'Tasks Done',    v:`${done}/${data.dailyTasks.length}`, c:allDone?'var(--green)':'var(--amber)'},
+  ].map(s => `<div class="stat-card"><div class="stat-label">${s.l}</div><div class="stat-val" style="color:${s.c}">${s.v}</div></div>`).join('');
+
+  renderDailyList('oDailyList', 'oDailyCount');
+
+  const today  = todayISO();
+  const urgent = data.production.filter(o =>
+    o.status === 'delayed' || (o.delivery && o.delivery <= today && o.status !== 'ready' && o.status !== 'completed')
+  );
+  $('alertsCard').innerHTML = urgent.length
+    ? `<div class="card alert-card" style="margin-bottom:16px">
+        <div class="card-head"><span class="card-title alert-title">⚠ Attention Required</span></div>
+        ${urgent.map(o => `<div class="task-row" style="border-bottom:1px solid rgba(239,85,85,.08)">
+          <span style="font-size:11px;color:var(--gold);font-family:'IBM Plex Mono',monospace;min-width:100px">${esc(o.id)}</span>
+          <span style="flex:1;font-size:12px;color:var(--text-2)">${esc(o.product)}</span>
+          ${statusBadge(o.status)}
+        </div>`).join('')}
+      </div>`
+    : '';
+
+  const upcoming = data.events
+    .filter(e => e.date >= today)
+    .sort((a,b) => a.date.localeCompare(b.date))
+    .slice(0, 5);
+  const evtEl = $('oEventList');
+  evtEl.innerHTML = upcoming.length
+    ? upcoming.map(e => {
+        const et = EVT_TYPES[e.type] || EVT_TYPES.trip;
+        return `<div class="event-row">
+          <div class="event-bar" style="background:${et.color}"></div>
+          <div style="flex:1">
+            <div class="event-name">${esc(e.name)}</div>
+            <div class="event-meta">${fmtDate(e.date)} · ${et.label}</div>
+          </div>
+          <button class="del-btn" onclick="deleteEvent(${Number(e.id)||0})" aria-label="Delete event">×</button>
+        </div>`;
+      }).join('')
+    : '<div class="empty">No upcoming events.</div>';
+
+  const todayKey = getTodayKey();
+  const wtEl     = $('oWeeklyToday');
+  if (todayKey) {
+    const tasks = data.weeklyTasks[todayKey] || [];
+    wtEl.innerHTML = `<div class="card-head"><span class="card-title">${DAY_FULL[todayKey]}'s Weekly Tasks</span></div>
+      ${tasks.length
+        ? tasks.map((t,i) => `<div class="task-row">
+            <button class="${taskCheckClass(t.status)}" style="width:18px;height:18px;font-size:10px;" onclick="cycleWeekTask('${todayKey}',${i})" aria-label="Cycle status">${taskCheckIcon(t.status)}</button>
+            <span class="task-text${t.status==='done'?' done':''}" style="font-size:12px">${esc(t.text)}</span>
+          </div>`).join('')
+        : '<div class="empty">No weekly tasks for today.</div>'}`;
+    wtEl.style.display = 'block';
+  } else {
+    wtEl.style.display = 'none';
+  }
+}
+
+function renderProduction() {
+  const stats = computeStats();
+  $('prodStats').innerHTML = [
+    {l:'Total',         v:stats.total,  c:'var(--gold)'},
+    {l:'In Production', v:stats.inProd, c:'var(--blue)'},
+    {l:'Quality Check', v:stats.qc,     c:'var(--amber)'},
+    {l:'Ready to Ship', v:stats.ready,  c:'var(--green)'},
+    {l:'Delayed',       v:stats.delayed,c:'var(--red)'},
+  ].map((s,i) => `<div class="prod-stat"${i===4?' style="border-right:none"':''}><div class="prod-stat-label">${s.l}</div><div class="prod-stat-val" style="color:${s.c}">${s.v}</div></div>`).join('');
+
+  const tbody = $('prodBody');
+  if (!data.production.length) {
+    tbody.innerHTML = '<tr><td colspan="14" class="empty">No orders. Click "New Order" to add one.</td></tr>';
+    return;
+  }
+
+  let grandTotal = 0, grandProfit = 0;
+  const rows = data.production.map((o,i) => {
+    const prog   = Math.min(100, Math.max(0, parseInt(o.progress, 10) || 0));
+    const pc     = prog >= 100 ? 'var(--green)' : prog > 50 ? 'var(--blue)' : 'var(--amber)';
+    const vp     = parseFloat(o.vendorPrice) || 0;
+    const sp     = parseFloat(o.salesPrice)  || 0;
+    const qty    = parseInt(o.qty, 10) || 0;
+    const total  = sp * qty;
+    grandTotal  += total;
+    grandProfit += (sp - vp) * qty;
+    const margin = sp > 0 ? ((sp - vp) / sp * 100) : 0;
+    const mColor = margin >= 30 ? 'var(--green)' : margin >= 15 ? 'var(--amber)' : 'var(--red)';
+    return `<tr>
+      <td class="mono">${esc(o.id)}</td>
+      <td style="color:var(--text-2)">${esc(o.product)}</td>
+      <td>${esc(o.client)}</td>
+      <td style="color:var(--text-2)">${esc(o.vendor) || '—'}</td>
+      <td class="num">${qty.toLocaleString('en-IN')}</td>
+      <td class="num">${vp ? '₹'+vp.toFixed(2) : '—'}</td>
+      <td class="num">${sp ? '₹'+sp.toFixed(2) : '—'}</td>
+      <td class="num" style="color:${mColor}">${sp ? margin.toFixed(1)+'%' : '—'}</td>
+      <td class="num" style="color:var(--gold)">${total ? '₹'+total.toLocaleString('en-IN') : '—'}</td>
+      <td>${fmtDate(o.start)}</td>
+      <td>${fmtDate(o.delivery)}</td>
+      <td><div style="display:flex;align-items:center;gap:8px"><div class="prog-wrap"><div class="prog-fill" style="width:${prog}%;background:${pc}"></div></div><span class="prog-pct">${prog}%</span></div></td>
+      <td>${statusBadge(o.status)}</td>
+      <td style="white-space:nowrap"><button class="edit-btn" onclick="editProduction(${i})" title="Edit" aria-label="Edit order">✎</button> <button class="del-btn" style="opacity:.4" onclick="deleteProduction(${i})" title="Delete" aria-label="Delete order">×</button></td>
+    </tr>`;
+  }).join('');
+
+  const totalRow = `<tr style="background:var(--bg-2);border-top:2px solid var(--border-hi)">
+    <td colspan="8" style="padding:10px 14px;font-family:'Rajdhani',sans-serif;font-weight:600;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-4)">Grand Total</td>
+    <td class="num" style="font-size:12px;font-weight:500;color:var(--gold);padding:10px 14px">₹${grandTotal.toLocaleString('en-IN')}</td>
+    <td colspan="4" class="num" style="color:var(--green);padding:10px 14px">Profit: ₹${grandProfit.toLocaleString('en-IN')}</td>
+    <td></td>
+  </tr>`;
+  tbody.innerHTML = rows + totalRow;
+}
+
+function renderTasksView() {
+  renderDailyList('tDailyList', 'tDailyCount');
+  renderWeekly();
+}
+
+function renderWeekly() {
+  const todayKey = getTodayKey();
+  $('weekGrid').innerHTML = DAYS.map(day => {
+    const tasks = data.weeklyTasks[day] || [];
+    const isToday = day === todayKey;
+    return `<div class="day-col">
+      <div class="day-head${isToday?' today':''}">${DAY_LABELS[day]}${isToday?' ·':''}</div>
+      <div class="day-tasks">
+        ${tasks.map((t,i) => `<div class="wt" onclick="cycleWeekTask('${day}',${i})">
+          <span class="wt-dot" style="background:${t.status==='done'?'var(--green)':t.status==='wip'?'var(--amber)':'var(--text-5)'}"></span>
+          <span class="wt-text${t.status==='done'?' done':''}">${esc(t.text)}</span>
+          <button class="wt-del" onclick="event.stopPropagation();deleteWeekTask('${day}',${i})" aria-label="Delete task">×</button>
+        </div>`).join('')}
+        <button class="day-add" onclick="openWeekModal('${day}')" aria-label="Add task">+</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function changeMonth(dir) {
+  data.calMonth += dir;
+  if (data.calMonth > 11) { data.calMonth = 0;  data.calYear++; }
+  if (data.calMonth < 0)  { data.calMonth = 11; data.calYear--; }
+  save();
+  renderCalendar();
+}
+window.changeMonth = changeMonth;
+
+function renderCalendar() {
+  const yr = data.calYear, mo = data.calMonth;
+  $('calMonthLabel').textContent = `${MONTHS[mo]} ${yr}`;
+  const first        = new Date(yr, mo, 1).getDay();
+  const daysInMonth  = new Date(yr, mo+1, 0).getDate();
+  const prevDays     = new Date(yr, mo, 0).getDate();
+  const today        = new Date();
+  const moKey        = `${yr}-${String(mo+1).padStart(2,'0')}`;
+  const eventDates   = new Set(
+    data.events
+      .filter(e => typeof e.date === 'string' && e.date.slice(0,7) === moKey)
+      .map(e => parseInt(e.date.slice(8), 10))
+      .filter(n => !isNaN(n))
+  );
+
+  let cells = '';
+  for (let i = 0; i < first; i++) cells += `<div class="cal-day">${prevDays - first + i + 1}</div>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = today.getFullYear() === yr && today.getMonth() === mo && today.getDate() === d;
+    const hasEvt  = eventDates.has(d);
+    const isSel   = selectedDate === dateStr;
+    cells += `<div class="cal-day cur${isToday?' today':''}${hasEvt?' has-evt':''}${isSel?' sel':''}" onclick="selectDate('${dateStr}')">${d}</div>`;
+  }
+  $('calDays').innerHTML = cells;
+  renderEventPanel();
+}
+
+function selectDate(dateStr) {
+  selectedDate = selectedDate === dateStr ? null : dateStr;
+  $('evtDate').value = selectedDate || '';
+  renderCalendar();
+}
+window.selectDate = selectDate;
+
+function renderEventPanel() {
+  const head = $('evtPanelHead');
+  let events = [...data.events].sort((a,b) => String(a.date).localeCompare(String(b.date)));
+  if (selectedDate) {
+    events = events.filter(e => e.date === selectedDate);
+    head.textContent = selectedDate;
+  } else {
+    head.textContent = 'Upcoming Events';
+    const today = todayISO();
+    events = events.filter(e => e.date >= today);
+  }
+  const list = $('evtList');
+  if (!events.length) { list.innerHTML = '<div class="empty">No events.</div>'; return; }
+  list.innerHTML = events.map(e => {
+    const et = EVT_TYPES[e.type] || EVT_TYPES.trip;
+    return `<div class="event-row">
+      <div class="event-bar" style="background:${et.color}"></div>
+      <div style="flex:1">
+        <div class="event-meta">${esc(e.date)}</div>
+        <div class="event-name">${esc(e.name)}</div>
+        <div class="event-type-label" style="color:${et.color}">${et.label}</div>
+      </div>
+      <button class="del-btn" onclick="deleteEvent(${Number(e.id)||0})" aria-label="Delete event">×</button>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════════════════════
+// ACTIONS
+// ════════════════════════════════════════════════════════════════════
+function cycleDailyTask(i)        { const t=data.dailyTasks[i]; if(!t)return; t.status=TASK_CYCLE[t.status]||'todo'; save(); render(); }
+function deleteDailyTask(i)       { data.dailyTasks.splice(i,1); save(); render(); }
+function addDailyTask(inpId,prId) {
+  const inp = $(inpId); const val = inp.value.trim(); if (!val) return;
+  data.dailyTasks.push({id:Date.now(), text:val, status:'todo', pri:$(prId).value});
+  inp.value=''; save(); render();
+}
+function deleteProduction(i)      { data.production.splice(i,1); save(); render(); }
+function cycleWeekTask(day,i)     { const t=data.weeklyTasks[day]?.[i]; if(!t)return; t.status=TASK_CYCLE[t.status]||'todo'; save(); render(); }
+function deleteWeekTask(day,i)    { if(!data.weeklyTasks[day])return; data.weeklyTasks[day].splice(i,1); save(); render(); }
+function addEvent() {
+  const name=$('evtName').value.trim(), date=$('evtDate').value, type=$('evtType').value;
+  if (!name||!date) return;
+  data.events.push({id:Date.now(), name, date, type});
+  $('evtName').value=''; save(); render();
+}
+function deleteEvent(id)          { data.events=data.events.filter(e=>e.id!==id); save(); render(); }
+Object.assign(window, {cycleDailyTask, deleteDailyTask, addDailyTask, deleteProduction, cycleWeekTask, deleteWeekTask, addEvent, deleteEvent});
+
+// ════════════════════════════════════════════════════════════════════
+// PRODUCTION MODAL
+// ════════════════════════════════════════════════════════════════════
+function openProductionModal() {
+  editingProdIdx = -1;
+  $('prodModalTitle').textContent = 'New Production Order';
+  $('prodModalBtn').textContent   = 'Add Order';
+  $('m_id').value         = 'ORD-' + Date.now().toString().slice(-6);
+  $('m_id').readOnly      = false;
+  $('m_client').value     = '';
+  $('m_product').value    = '';
+  $('m_qty').value        = '';
+  $('m_vendor').value     = '';
+  $('m_vendorPrice').value= '';
+  $('m_salesPrice').value = '';
+  $('m_start').value      = todayISO();
+  $('m_delivery').value   = '';
+  $('m_progress').value   = '0';
+  $('m_status').value     = 'in-prod';
+  $('productionModal').classList.add('open');
+  setTimeout(() => $('m_client').focus(), 30);
+}
+function editProduction(i) {
+  const o = data.production[i]; if (!o) return;
+  editingProdIdx = i;
+  $('prodModalTitle').textContent = 'Edit Production Order';
+  $('prodModalBtn').textContent   = 'Update Order';
+  $('m_id').value         = o.id;
+  $('m_id').readOnly      = true;
+  $('m_client').value     = o.client || '';
+  $('m_product').value    = o.product || '';
+  $('m_qty').value        = o.qty ?? '';
+  $('m_vendor').value     = o.vendor || '';
+  $('m_vendorPrice').value= o.vendorPrice ?? '';
+  $('m_salesPrice').value = o.salesPrice ?? '';
+  $('m_start').value      = o.start || '';
+  $('m_delivery').value   = o.delivery || '';
+  $('m_progress').value   = o.progress ?? 0;
+  $('m_status').value     = o.status || 'in-prod';
+  $('productionModal').classList.add('open');
+}
+function closeProductionModal() { $('productionModal').classList.remove('open'); editingProdIdx = -1; }
+function saveProductionOrder() {
+  const order = {
+    id:          $('m_id').value || 'ORD-' + Date.now(),
+    product:     $('m_product').value || 'Unnamed Product',
+    client:      $('m_client').value  || 'Unknown Client',
+    qty:         parseInt($('m_qty').value, 10) || 0,
+    vendor:      $('m_vendor').value || '',
+    vendorPrice: parseFloat($('m_vendorPrice').value) || 0,
+    salesPrice:  parseFloat($('m_salesPrice').value)  || 0,
+    start:       $('m_start').value,
+    delivery:    $('m_delivery').value,
+    progress:    Math.min(100, Math.max(0, parseInt($('m_progress').value, 10) || 0)),
+    status:      $('m_status').value,
+  };
+  if (editingProdIdx >= 0) data.production[editingProdIdx] = order;
+  else                     data.production.push(order);
+  save();
+  closeProductionModal();
+  render();
+}
+Object.assign(window, {openProductionModal, editProduction, closeProductionModal, saveProductionOrder});
+
+// ════════════════════════════════════════════════════════════════════
+// WEEK MODAL
+// ════════════════════════════════════════════════════════════════════
+function openWeekModal(day) {
+  $('wm_task').value = '';
+  $('wm_day').innerHTML = DAYS.map(d => `<option value="${d}"${d===day?' selected':''}>${DAY_FULL[d]}</option>`).join('');
+  $('weekModal').classList.add('open');
+  setTimeout(() => $('wm_task').focus(), 30);
+}
+function closeWeekModal() { $('weekModal').classList.remove('open'); }
+function saveWeekTask() {
+  const text=$('wm_task').value.trim(), day=$('wm_day').value;
+  if (!text) return;
+  if (!Array.isArray(data.weeklyTasks[day])) data.weeklyTasks[day] = [];
+  data.weeklyTasks[day].push({id:Date.now(), text, status:'todo'});
+  save();
+  closeWeekModal();
+  render();
+}
+Object.assign(window, {openWeekModal, closeWeekModal, saveWeekTask});
+
+// Outside-click + Escape to dismiss modals
+['productionModal','weekModal'].forEach(id => {
+  const el = $(id);
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+  }
+});
+
+// ════════════════════════════════════════════════════════════════════
+// RENDER ORCHESTRATOR
+// ════════════════════════════════════════════════════════════════════
+const RENDERERS = { overview: renderOverview, production: renderProduction, tasks: renderTasksView, calendar: renderCalendar };
+let renderQueued = false;
+function render() {
+  if (renderQueued) return;
+  renderQueued = true;
+  requestAnimationFrame(() => {
+    renderQueued = false;
+    (RENDERERS[activeView] || renderOverview)();
+  });
+}
+
+// ════════════════════════════════════════════════════════════════════
+// BOOT
+// ════════════════════════════════════════════════════════════════════
+// Pre-paint from local cache so first frame isn't empty
+const cached0 = localLoad();
+if (cached0) data = normalizeData(cached0);
+
+// Wait for deferred Firebase SDK scripts to finish loading, then init.
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initFirebase);
+} else {
+  initFirebase();
+}
+
+// If Firebase isn't configured, render straight away (login screen will appear with the warning)
+if (!FIREBASE_READY) { render(); }
+</script>
+</body>
+</html>
